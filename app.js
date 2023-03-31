@@ -3,8 +3,6 @@ const app = express();
 const router = express.Router();
 const mysql = require("mysql");
 const cors = require("cors");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 require("dotenv").config();
@@ -30,69 +28,6 @@ const db = mysql.createPool({
 app.use("/uploads", express.static("uploads"));
 app.use(express.json());
 app.use(cors());
-
-app.post("/register", async (req, res) => {
-  const { usuario, senha } = req.body;
-
-  try {
-    const result = db.query("SELECT * FROM register WHERE usuario = ?", [
-      usuario,
-    ]);
-    const existingUser = result[0] ?? null;
-
-    if (existingUser) {
-      res.status(400).send({ msg: "Usuario ja cadastrado" });
-      return;
-    }
-
-    const hashedPassword = await bcrypt.hash(senha, 10);
-
-    db.query("INSERT INTO register (usuario, senha) VALUES (?, ?)", [
-      usuario,
-      hashedPassword,
-    ]);
-
-    res.status(201).send({ msg: "Usuario cadastrado com sucesso" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ msg: "Erro ao processar a solicitação" });
-  }
-});
-
-app.post("/login", (req, res) => {
-  const usuario = req.body.usuario;
-  const senha = req.body.senha;
-
-  db.query(
-    "SELECT * FROM register WHERE usuario = ?",
-    [usuario],
-    (err, result) => {
-      if (err) {
-        res.send(err);
-      } else {
-        if (result.length > 0) {
-          bcrypt.compare(senha, result[0].senha, (error, response) => {
-            if (error) {
-              res.send(error);
-            } else {
-              if (response) {
-                // Gerando o token JWT
-                const token = jwt.sign({ usuario: usuario }, "secretkey", {
-                  expiresIn: "1h",
-                });
-                res.json({ token });
-              } else {
-                res.send({ msg: "Senha incorreta" });
-              }
-            }
-          });
-        } else {
-          res.send({ msg: "Usuário não registrado!" });
-        }
-      }
-    }
-  );
-});
 
 app.post("/blog", upload.single("photo"), async (req, res) => {
   const { news, friendly_url, news_title } = req.body;
