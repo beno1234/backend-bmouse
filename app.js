@@ -239,6 +239,6 @@ app.put("/blog/:friendly_url", upload.single("photo"), async (req, res) => {
   }
 });
 
-app
-  .listen({ host: "0.0.0.0", PORT: process.env.PORT || 3333 })
-  .then(console.log("server running"));
+app.listen(process.env.PORT || 3333, () => {
+  console.log("rodando");
+});
