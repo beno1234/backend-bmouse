@@ -174,4 +174,4 @@ app.put("/blog/:friendly_url", upload.single("photo"), async (req, res) => {
   }
 });
 
-server.listen({ host: "0.0.0.0", port: 10000 });
+app.listen({ host: "0.0.0.0", port: 10000 });
