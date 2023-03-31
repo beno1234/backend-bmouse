@@ -119,6 +119,11 @@ app.post("/blog", upload.single("photo"), async (req, res) => {
 });
 
 app.get("/blog", async (req, res) => {
+  const secret = req.headers.secret;
+  if (secret != "abacaxi") {
+    res.status(403).send({ msg: "Usuário não autorizado" });
+    return;
+  }
   try {
     db.query("SELECT * FROM blog", (err, results) => {
       if (err) {
@@ -234,6 +239,4 @@ app.put("/blog/:friendly_url", upload.single("photo"), async (req, res) => {
   }
 });
 
-app.listen(3002, () => {
-  console.log("rodando na porta 3002");
-});
+app.listen({ host: "0.0.0.0", PORT: process.env.PORT || 3333 });
