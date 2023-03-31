@@ -115,6 +115,27 @@ app.get("/blog/:friendly_url", async (req, res) => {
   }
 });
 
+app.delete("/blog/:uuid", async (req, res) => {
+  try {
+    const uuid = req.params.uuid;
+    db.query("DELETE FROM blog WHERE uuid=?", [uuid], (err, results) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send({ msg: "Error processing request" });
+        return;
+      }
+      if (results.affectedRows === 0) {
+        res.status(404).send({ msg: "Blog post not found" });
+        return;
+      }
+      res.status(200).send({ msg: "Blog post deleted successfully" });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ msg: "Error processing request" });
+  }
+});
+
 /* app.get("/blog/:d", async (req, res) => {
   try {
     const friendly_url = req.params.friendly_url;
