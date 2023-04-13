@@ -70,7 +70,7 @@ app.get("/blog", async (req, res) => {
       // Modify the response to include the file path to the uploaded image
       const blogPosts = results.map((post) => ({
         uuid: post.uuid,
-        photo: `https://nodedeploy-api-ppzh.onrender.com/uploads/${post.photo}`, // Add the file path to the photo
+        photo: `https://glorious-duck-shoulder-pads.cyclic.app/uploads/${post.photo}`, // Add the file path to the photo
         news: post.news,
         friendly_url: post.friendly_url,
         news_title: post.news_title,
