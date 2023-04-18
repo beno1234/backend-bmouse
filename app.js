@@ -4,8 +4,11 @@ const router = express.Router();
 const mysql = require("mysql");
 const cors = require("cors");
 const multer = require("multer");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const path = require("path");
 require("dotenv").config();
+const port = process.env.PORT || 4000;
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -28,6 +31,65 @@ const db = mysql.createPool({
 app.use("/uploads", express.static("uploads"));
 app.use(express.json());
 app.use(cors());
+
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  db.query(
+    "SELECT * FROM users WHERE email = ?",
+    [email],
+    async (err, result) => {
+      if (err) {
+        res.status(500).send({ msg: "Erro interno do servidor", err });
+        return;
+      }
+      if (result.length === 0) {
+        res.status(401).send({ msg: "Usuário não registrado!" });
+        return;
+      }
+
+      const storedPassword = result[0].password;
+      const isHashed = storedPassword.startsWith("$2b$");
+      let validPassword = false;
+
+      if (isHashed) {
+        validPassword = await bcrypt.compare(password, storedPassword);
+      } else {
+        validPassword = password === storedPassword;
+      }
+
+      if (!validPassword) {
+        res.status(401).send({ msg: "Senha incorreta" });
+        return;
+      }
+
+      // Gerando o token JWT
+      const token = jwt.sign({ email: email }, "secretkey", {
+        expiresIn: "1h",
+      });
+      res.json({ token });
+    }
+  );
+});
+
+app.get("/list-users", async (req, res) => {
+  try {
+    db.query("SELECT * FROM users", (err, results, fields) => {
+      if (err) {
+        return res.status(500).json({ message: err });
+      }
+      console.log(results);
+      if (results.length > 0) {
+        return res.status(200).json(results);
+      } else {
+        return res.status(401).json({ message: err });
+      }
+    });
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 app.post("/blog", upload.single("photo"), async (req, res) => {
   const { news, friendly_url, news_title } = req.body;
@@ -65,12 +127,12 @@ app.get("/blog", async (req, res) => {
         return;
       }
 
-      const link = "localhost:3002";
+      const link = "https://bmouse.herokuapp.com";
 
       // Modify the response to include the file path to the uploaded image
       const blogPosts = results.map((post) => ({
         uuid: post.uuid,
-        photo: `https://glorious-duck-shoulder-pads.cyclic.app/uploads/${post.photo}`, // Add the file path to the photo
+        photo: `${link}/uploads/${post.photo}`, // Add the file path to the photo
         news: post.news,
         friendly_url: post.friendly_url,
         news_title: post.news_title,
@@ -195,4 +257,6 @@ app.put("/blog/:friendly_url", upload.single("photo"), async (req, res) => {
   }
 });
 
-app.listen({ host: "0.0.0.0", port: 10000 });
+app.listen(port, () => {
+  console.info(`aplicacao rodando ${port}`);
+});
